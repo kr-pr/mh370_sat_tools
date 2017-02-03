@@ -7,7 +7,7 @@ class InmarsatLog:
     'Contains Inmarsat data set'
     def __init__(self, data):
         self.data = data
-        self.time_step = timedelta(seconds=10)
+        self.time_step = 10
     def __iter__(self):
         return (item for item in self.data)
 
@@ -26,7 +26,7 @@ class InmarsatLog:
             channels = set(filter(lambda record: record.channel, records))
             channel = None if len(channels) > 1 else records[0].channel
             binned_values.append(InmarsatRecord(time, channel, bto, bfo))
-        return InmarsatLog(sorted(binned_values, key=lambda item: item.time))
+        return InmarsatLog(sorted(binned_values, key=lambda item: item.time), self.time_step)
 
     @classmethod
     def from_csv(cls, folder, file_name):
@@ -81,7 +81,7 @@ class InmarsatLog:
                     try:
                         float(items[27])
                         item_bto = process_bto(items[27], items[13], items[0])
-                    except ValueError :
+                    except ValueError:
                         item_bto = None
                     data.append(InmarsatRecord(
                         item_time, item_channel, item_bto, item_bfo))
