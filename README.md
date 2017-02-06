@@ -1,3 +1,9 @@
 This is a Python class collection used for computing time and direction grids for flight MH370 based on Inmarsat data. The grids are used to define target time contours and linear feature azimuths on available IR imagery.
 
-As both BTO and BFO measurements are only sensitive to radial movement of aircraft w.r.t. satellite, the measurement set can be viewed as collection of samples of single R(t) curve (BTO) and its time derivative (BFO). This fact is used to produce a piecewise linear fit for R(t) based on all available BTO and BFO data binned into 10sec intervals. This R(t) curve is then used to calculate time and direction of flight on arbitrary geographic grid. The contours are used to define geographic boundaries for IR imagery taken over area, and direction can be used to make kernel for automated feature extraction.   
+Grids are obtained via following process:
+1. Radial distance from a/c to satellite is calculated for all BTO values.
+2. Radial distance is interpolated with a suitable smooth function.
+3. Time derivative of radial distance is computed.
+4. R(t) and dR/dt are used together with BFO model to obtain possible track azimuth versus position on an arc.
+5. Time grid is calculated from interpolated R(t) function
+6. Azimuth grid is calculated by 2-D interpolation of values derived from BFO

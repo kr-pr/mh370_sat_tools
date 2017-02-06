@@ -1,18 +1,16 @@
+'Trajectory data import and cleaning'
 from collections import namedtuple
 from datetime import datetime
 
 Position = namedtuple('Position', 'time lat lon alt')
 
-
 class Trajectory:
     'Loads and interpolates available aircraft position data'
 
-    def __init__(self, data, time_from, time_step):
+    def __init__(self, data):
         self.data = data
-        self.time_from = time_from
-        self.time_step = time_step
 
-    def int_data(self):
+    def int_data(self, time_from, time_step):
         'Interpolates position data to half the BTO/BFO bin interval'
         def make_time_finder(items):
             'Closure for finding function'
@@ -27,7 +25,7 @@ class Trajectory:
 
         finder = make_time_finder(self.data)
         interpolated = []
-        time = self.time_from
+        time = time_from
         while time < self.data[-1].time:
             ind = finder(time)
             if time == self.data[ind].time:
@@ -37,16 +35,15 @@ class Trajectory:
                 time_diff = (time - self.data[ind-1].time,
                              self.data[ind].time - time)
                 sec_diff = [item.total_seconds() for item in time_diff]
-                print(ind, sec_diff, pair)
                 int_item = Position(time, *[(sec_diff[0] * y + sec_diff[1] * x) / sum(sec_diff)
                                             for x, y in pair[1:]])
             interpolated.append(int_item)
-            time += self.time_step
+            time += time_step
 
-        return Trajectory(interpolated, self.time_from, self.time_step)
+        return Trajectory(interpolated)
 
     @classmethod
-    def from_csv(cls, time_from, time_step, folder, **files):
+    def from_csv(cls, folder, **files):
         'Loads position data from files'
         cols = {
             "adsb": (0, 4, 5, 3),
@@ -111,4 +108,4 @@ class Trajectory:
                     parsed = loaders[file_type](*args)
                     if parsed is not None:
                         data.append(parsed)
-        return cls(sorted(data, key=lambda item: item.time), time_from, time_step)
+        return cls(sorted(data, key=lambda item: item.time))
