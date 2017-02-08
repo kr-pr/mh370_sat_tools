@@ -1,5 +1,6 @@
 'Calculation of radial distance and time derivative'
 from collections import namedtuple
+from time_conv import to_sec
 
 Distance = namedtuple('Distance', 'time r')
 class RadialDistance:
@@ -8,20 +9,32 @@ class RadialDistance:
     def __init__(self, data):
         self.data = data
 
-    def __add__(self, other):
-        return RadialDistance(self.data + other.data)
+    def extend(self, other):
+        'Adds values to the end of self.dataa'
+        last_time = self.data[-1].time
+        extended_data = self.data + list(filter(lambda t: t.time > last_time, other.data))
+        return RadialDistance(extended_data)
 
-    def interpolate(self):
+    def as_array(self):
+        'Returns self.data as tuple of Numpy arrays'
+        from numpy import array
+        combined = array([(to_sec(item.time), item.r) for item in self.data])
+        return combined[:,0,None].T, combined[:,1,None].T
+
+    def interpolate(self, vector):
         'Interpolates missing values with splines'
-        int_data = None
-        return RadialDistance(int_data)
+        from scipy.interpolate import splev, splrep
+        x, y = self.as_array()
+        spl_rep = splrep(x, y)
+        spl_values = splev(vector, spl_rep)
+        return spl_rep, spl_values
 
     @classmethod
     def from_traj(cls, traj):
         'Calculates radial distance from trajectory'
         import sat
         satellite = sat.Satellite()
-        data = [(item.time, satellite.distance_to_ac(*item)) for item in traj]
+        data = [Distance(item.time, satellite.distance_to_ac(*item)) for item in traj]
         return cls(data)
 
     @classmethod
@@ -37,7 +50,7 @@ class RadialDistance:
         import sat
         satellite = sat.Satellite()
 
-        data = [(item.time, distance(item.time, item.bto)) for item in
+        data = [Distance(item.time, distance(item.time, item.bto)) for item in
                 filter(lambda record: record.bto is not None, inm_log)]
         return cls(data)
 
