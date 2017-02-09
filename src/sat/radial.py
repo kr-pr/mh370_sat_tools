@@ -19,15 +19,13 @@ class RadialDistance:
         'Returns self.data as tuple of Numpy arrays'
         from numpy import array
         combined = array([(to_sec(item.time), item.r) for item in self.data])
-        return combined[:,0,None].T, combined[:,1,None].T
+        return combined[:, 0, None], combined[:, 1, None]
 
-    def interpolate(self, vector):
+    def interpolate(self):
         'Interpolates missing values with splines'
-        from scipy.interpolate import splev, splrep
+        from scipy.interpolate import splrep
         x, y = self.as_array()
-        spl_rep = splrep(x, y)
-        spl_values = splev(vector, spl_rep)
-        return spl_rep, spl_values
+        return splrep(x, y, s=len(self.data))
 
     @classmethod
     def from_traj(cls, traj):
