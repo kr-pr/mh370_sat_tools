@@ -1,6 +1,5 @@
 'Calculation of radial distance and time derivative'
 from collections import namedtuple
-from time_conv import to_sec
 
 Distance = namedtuple('Distance', 'time r')
 class RadialDistance:
@@ -9,23 +8,21 @@ class RadialDistance:
     def __init__(self, data):
         self.data = data
 
-    def extend(self, other):
-        'Adds values to the end of self.dataa'
+    def append(self, other):
+        'Adds values to the end of self.data'
         last_time = self.data[-1].time
         extended_data = self.data + list(filter(lambda t: t.time > last_time, other.data))
         return RadialDistance(extended_data)
 
-    def as_array(self):
-        'Returns self.data as tuple of Numpy arrays'
-        from numpy import array
-        combined = array([(to_sec(item.time), item.r) for item in self.data])
-        return combined[:, 0, None], combined[:, 1, None]
+    def take_after(self, time_from):
+        'Makes a new container with different starting time'
+        cut_data = list(filter(lambda t: t.time > time_from), self.data)
+        return RadialDistance(cut_data)
 
-    def interpolate(self):
-        'Interpolates missing values with splines'
-        from scipy.interpolate import splrep
-        x, y = self.as_array()
-        return splrep(x, y, s=len(self.data))
+    def filter_by_list(self, times):
+        'Downsamples acc to list of timestamps'
+        filtered_data = filter(lambda x: x.data in times, self.data)
+        return RadialDistance(filtered_data)
 
     @classmethod
     def from_traj(cls, traj):

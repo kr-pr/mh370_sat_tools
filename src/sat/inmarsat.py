@@ -4,6 +4,9 @@ from collections import namedtuple, defaultdict
 
 InmarsatRecord = namedtuple('InmarsatRecord', 'time channel bto bfo')
 
+def mean(items, key):
+    values = [item[key] for item in items]
+    return sum(values)/len(values)
 
 class InmarsatLog:
     'Contains Inmarsat data set'
@@ -27,13 +30,12 @@ class InmarsatLog:
         else:
             raise NotImplementedError()
         for time, records in time_hash.items():
-            bfos = [item.bfo for item in records]
-            bfo = sum(bfos) / len(bfos)
+            bfo = mean(records, 'bfo')
+            channel = mean(records, 'channel')
             btos = [item.bto for item in filter(
                 lambda record: record.bto is not None, records)]
             bto = None if len(btos) == 0 else sum(btos) / len(btos)
-            channels = list(filter(lambda record: record.channel, records))
-            channel = max(set(channels), key=channels.count)
+
             binned_values.append(InmarsatRecord(time, channel, bto, bfo))
         return InmarsatLog(sorted(binned_values, key=lambda item: item.time))
 
@@ -93,5 +95,5 @@ class InmarsatLog:
                     except ValueError:
                         item_bto = None
                     data.append(InmarsatRecord(
-                        item_time, item_channel, item_bto, item_bfo))
+                        item_time, int(item_channel, 16), item_bto, item_bfo))
         return cls(sorted(data, key=lambda item: item.time))
