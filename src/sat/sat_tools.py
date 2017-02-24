@@ -1,11 +1,6 @@
 'Contains satellite state'
 import ephem
 
-def to_eph_date(time):
-    'Converts from datetime to Pyephem Date'
-    return ephem.Date((time.year, time.month, time.day, time.hour, time.minute,
-                       time.second+time.microsecond*1e-6))
-
 class Satellite:
     'Calculates distances from satellite to ground station and a/c'
     def __init__(self):

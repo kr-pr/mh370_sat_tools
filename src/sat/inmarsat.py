@@ -5,7 +5,7 @@ from collections import namedtuple, defaultdict
 InmarsatRecord = namedtuple('InmarsatRecord', 'time channel bto bfo')
 
 def mean(items, key):
-    values = [item[key] for item in items]
+    values = [item._asdict()[key] for item in items]
     return sum(values)/len(values)
 
 class InmarsatLog:

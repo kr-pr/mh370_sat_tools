@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from inmarsat import InmarsatLog
 from trajectory import Trajectory
 from radial import RadialDistance
-from spectrum import interpolate
 
 T0 = {'take-off': datetime(2014, 3, 7, 16, 42, 0, 0),
       'off-radar': datetime(2014, 3, 7, 18, 22, 10, 0)}
@@ -40,7 +39,8 @@ def main():
                    (2014, 3, 7, 19, 41, 5), (2014, 3, 7, 20, 41, 5), (2014, 3, 7, 21, 41, 25),
                    (2014, 3, 7, 22, 41, 25), (2014, 3, 8, 0, 19, 35)]
 
-    interp_r = interpolate(r_flight.data, [datetime(item) for item in trend_times])
+    r_trend = r_flight.filter_by_list([datetime(*item) for item in trend_times])
+    r_interp = r_flight.interpolate(r_trend, T0['off-radar'])
 
 if __name__ == '__main__':
     main()
