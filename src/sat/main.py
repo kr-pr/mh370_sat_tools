@@ -25,9 +25,9 @@ def main():
     traj_time_step = time_step / 2
 
     traj = Trajectory.from_csv('data',
-                                          acars='acars.csv',
-                                          adsb='all-combined.csv',
-                                          radar='route.csv')
+                               acars='acars.csv',
+                               adsb='all-combined.csv',
+                               radar='route.csv')
     int_traj = traj.int_data(
         bin_log.data[0].time - traj_time_step, traj_time_step)
 
