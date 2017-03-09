@@ -1,4 +1,6 @@
 'Runner for calculations'
+from sys import argv
+from json import load
 from datetime import datetime, timedelta
 from inmarsat import InmarsatLog
 from trajectory import Trajectory
@@ -15,8 +17,25 @@ def compare_r(radial_1, radial_2):
     time_diff = [(t, dict_1[t]-dict_2[t]) for t in same_times]
     return sum([x[1] for x in time_diff])/len(time_diff)
 
-def main():
+def frange(a, b, step):
+    c = a
+    if b > a:
+        while not c > b:
+            yield c
+            c += step
+    else:
+        while not c < b:
+            yield c
+            c += step
+
+def main(args):
     'Runs calculation chain'
+    try:
+        action = args[1]
+        config = args[2]
+    except IndexError:
+        action = config = None
+
     inm_log = InmarsatLog.from_csv(
         'data', 'inmarsat-su-log-redacted.csv')
 
@@ -42,6 +61,36 @@ def main():
     r_trend = r_flight.filter_by_list([datetime(*item) for item in trend_times])
     r_interp = r_flight.interpolate(r_trend, T0['off-radar'])
 
+    if action == 'polygon':
+        with open(config, 'rt') as cfg_file:
+            cfg = load(cfg_file)
+        from shapefile import Writer, POLYGON
+        shp_file = Writer(POLYGON)
+        shp_file.field('TIME','C','20')
+        for contour in cfg['times']:
+            contour_pts = []
+            ind_a = 0
+            ind_b = 1
+            contour_time = datetime(*contour['time'])
+            if contour_time > r_interp.data[-1][0]:
+                contour_time = r_interp.data[-1][0]
+            for offset in cfg['time_delta']:
+                time_offset = timedelta(minutes=offset)
+                cur_time = contour_time+time_offset
+                contour_pts += [
+                    r_interp.find_loc(cur_time, lat) for lat in frange(
+                        contour['lat_bounds'][ind_a],
+                        contour['lat_bounds'][ind_b],
+                        cfg['lat_step']*(ind_b-ind_a)
+                    )
+                ]
+                ind_a, ind_b = ind_b, ind_a
+            shp_file.poly(parts=[contour_pts])
+            poly_name = '{}_{}_{}'.format(*contour['time'][2:5])
+            shp_file.record(poly_name)
+        shp_file.save(cfg['save_to_file'])
+
+
 if __name__ == '__main__':
-    main()
+    main(argv)
 
